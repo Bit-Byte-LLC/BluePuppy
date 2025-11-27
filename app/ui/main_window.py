@@ -97,14 +97,12 @@ class MainWindow(QMainWindow):
         self.info_tab = InfoTab()
         self.settings_tab = SettingsTab()
 
-        # Add tabs
+        # Add tabs in order: Devices, Info, GATT, DFU, SMP, Settings
         self.tabs.addTab(self.devices_tab, "Devices")
+        self.tabs.addTab(self.info_tab, "Info")
+        self.tabs.addTab(self.gatt_tab, "GATT")
         self.tabs.addTab(self.dfu_tab, "DFU")
         self.tabs.addTab(self.smp_tab, "SMP")
-        self.tabs.addTab(self.gatt_tab, "GATT")
-        self.tabs.addTab(self.info_tab, "Info")
-        self.tabs.addTab(self.settings_tab, "Settings")
-        self.tabs.addTab(self.info_tab, "Info")
         self.tabs.addTab(self.settings_tab, "Settings")
 
         layout.addWidget(self.tabs)
