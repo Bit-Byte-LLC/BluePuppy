@@ -4,13 +4,13 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "BluePuppy"
-version = "1.0.0"
-description = "A windows application for BLE devices using mcumgr/SMP with GUI"
+version = "2.0.0"
+description = "Bluetooth Low Energy Testing & Development Tool"
 readme = "README.md"
 requires-python = ">=3.11"
 license = {text = "MIT"}
 authors = [
-    {name = "Bit Byte LLC - Open Source Projects Team", email = "info@bitbytellc.com"}
+    {name = "Bit Byte LLC - Open Source Projects Team", email = "info@bit-byte.us"}
 ]
 keywords = ["dfu", "mcumgr", "smp", "ble", "nordic", "zephyr", "mcuboot"]
 classifiers = [

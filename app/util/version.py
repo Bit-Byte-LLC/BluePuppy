@@ -3,7 +3,41 @@ Version information and utilities
 """
 
 import re
+import tomllib
 from dataclasses import dataclass
+from pathlib import Path
+
+
+def _get_version_from_pyproject() -> "Version":
+    """
+    Read version from pyproject.toml using tomllib.
+
+    Returns:
+        Version instance from pyproject.toml
+
+    Raises:
+        RuntimeError: If version cannot be read
+    """
+    try:
+        # Get path to pyproject.toml (relative to this file)
+        pyproject_path = Path(__file__).parent.parent.parent / "pyproject.toml"
+
+        if not pyproject_path.exists():
+            raise FileNotFoundError(f"pyproject.toml not found at {pyproject_path}")
+
+        # Read and parse pyproject.toml with tomllib
+        with open(pyproject_path, "rb") as f:
+            data = tomllib.load(f)
+
+        version_str = data["project"]["version"]
+        return Version.from_string(version_str)
+
+    except Exception as e:
+        # Fallback to hardcoded version if pyproject.toml can't be read
+        # This ensures the app works even when bundled
+        import warnings
+        warnings.warn(f"Could not read version from pyproject.toml: {e}. Using fallback.", stacklevel=2)
+        return Version(2, 0, 0)
 
 
 @dataclass
@@ -88,7 +122,7 @@ class Version:
         return not self < other
 
 
-# Application version
-APP_VERSION = Version(1, 0, 0)
+# Application version - read from pyproject.toml
+APP_VERSION = _get_version_from_pyproject()
 APP_NAME = "BluePuppy"
 APP_ORGANIZATION = "Bit Byte LLC"
