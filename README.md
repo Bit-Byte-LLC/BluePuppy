@@ -242,10 +242,10 @@ BluePuppy implements the **mcumgr Simple Management Protocol (SMP)** as specifie
 
 ```
 ┌──────────────────────────────────────────────────────────┐
-│                    SMP PDU (N bytes)                      │
+│                    SMP PDU (N bytes)                     │
 ├───────────┬──────────────────────────────────────────────┤
-│  Header   │              CBOR Payload                     │
-│ (8 bytes) │            (variable length)                  │
+│  Header   │              CBOR Payload                    │
+│ (8 bytes) │            (variable length)                 │
 └───────────┴──────────────────────────────────────────────┘
 
 Header Format:
