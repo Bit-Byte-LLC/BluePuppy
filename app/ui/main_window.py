@@ -3,12 +3,13 @@ Main application window
 """
 
 import asyncio
+import builtins
+import contextlib
 import sys
 from pathlib import Path
-from typing import Optional
 
 from bleak.backends.device import BLEDevice
-from PySide6.QtCore import Qt, Slot
+from PySide6.QtCore import Slot
 from PySide6.QtGui import QIcon
 from PySide6.QtWidgets import (
     QMainWindow,
@@ -40,9 +41,9 @@ class MainWindow(QMainWindow):
 
     def __init__(self):
         super().__init__()
-        self._smp_client: Optional[SMPClient] = None
-        self._dfu_workflow: Optional[DFUWorkflow] = None
-        self._current_device: Optional[BLEDevice | str] = None
+        self._smp_client: SMPClient | None = None
+        self._dfu_workflow: DFUWorkflow | None = None
+        self._current_device: BLEDevice | str | None = None
         self._settings = {}
         self._setup_ui()
         self._setup_logging()
@@ -52,20 +53,20 @@ class MainWindow(QMainWindow):
         """Setup UI components."""
         self.setWindowTitle(f"{APP_NAME} v{APP_VERSION}")
         self.setMinimumSize(900, 700)
-        
+
         # Set window icon - try multiple paths for dev and built versions
         icon_paths = []
-        
+
         # Development path (running from source)
         dev_assets = Path(__file__).parent.parent / "assets"
         icon_paths.append(dev_assets / "icon.ico")
-        
+
         # PyInstaller bundled path (both one-file and one-folder)
         if getattr(sys, '_MEIPASS', None):
             # When running as PyInstaller bundle
             bundle_assets = Path(sys._MEIPASS) / "assets"
             icon_paths.append(bundle_assets / "icon.ico")
-        
+
         # Try to load icon from available paths
         icon_loaded = False
         for icon_path in icon_paths:
@@ -74,7 +75,7 @@ class MainWindow(QMainWindow):
                 logger.debug("window_icon_loaded", path=str(icon_path))
                 icon_loaded = True
                 break
-        
+
         if not icon_loaded:
             logger.warning("window_icon_not_found", paths=[str(p) for p in icon_paths])
 
@@ -135,7 +136,7 @@ class MainWindow(QMainWindow):
     def _on_log_message(self, message: str) -> None:
         """
         Handle log message from logger.
-        
+
         Args:
             message: Log message
         """
@@ -229,7 +230,7 @@ class MainWindow(QMainWindow):
     def _on_device_selected(self, device: BLEDevice | str) -> None:
         """
         Handle device selection.
-        
+
         Args:
             device: Selected BLE device or serial port
         """
@@ -240,7 +241,7 @@ class MainWindow(QMainWindow):
     async def _connect_to_device_async(self, device: BLEDevice | str) -> None:
         """
         Connect to device asynchronously.
-        
+
         Args:
             device: BLE device or serial port
         """
@@ -260,7 +261,7 @@ class MainWindow(QMainWindow):
             smp_available = True
             if isinstance(device, BLEDevice):
                 smp_available = transport.has_smp_service
-                
+
                 if not smp_available:
                     # Show warning that SMP features are disabled
                     QMessageBox.warning(
@@ -281,7 +282,7 @@ class MainWindow(QMainWindow):
             # Update UI based on SMP availability
             self.devices_tab.set_connected(True)
             self._set_smp_tabs_enabled(smp_available)
-            
+
             # Set transport for GATT tab if BLE
             if isinstance(device, BLEDevice):
                 self.gatt_tab.set_transport(transport)
@@ -314,18 +315,18 @@ class MainWindow(QMainWindow):
     def _set_smp_tabs_enabled(self, enabled: bool) -> None:
         """
         Enable or disable SMP-dependent tabs.
-        
+
         Args:
             enabled: True to enable, False to disable
         """
         # Enable/disable DFU and SMP tabs
         self.dfu_tab.set_connected(enabled)
         self.smp_tab.set_connected(enabled)
-        
+
         # Optionally gray out the tabs or add visual indicator
         dfu_index = self.tabs.indexOf(self.dfu_tab)
         smp_index = self.tabs.indexOf(self.smp_tab)
-        
+
         if dfu_index >= 0:
             self.tabs.setTabEnabled(dfu_index, enabled)
         if smp_index >= 0:
@@ -362,7 +363,7 @@ class MainWindow(QMainWindow):
             # Device info (basic)
             device_text = f"Device: {self._current_device}\n"
             device_text += f"MTU: {await self._smp_client.get_mtu()} bytes\n\n"
-            
+
             # Get BLE services and characteristics if connected via BLE
             if isinstance(self._current_device, BLEDevice):
                 try:
@@ -371,7 +372,7 @@ class MainWindow(QMainWindow):
                 except Exception as e:
                     logger.warning("ble_services_query_failed", error=str(e))
                     device_text += f"BLE Services: Failed to retrieve ({e})\n"
-            
+
             self.info_tab.update_device_info(device_text)
 
         except Exception as e:
@@ -380,26 +381,26 @@ class MainWindow(QMainWindow):
     def _format_services_info(self, services: dict) -> str:
         """
         Format BLE services and characteristics information.
-        
+
         Args:
             services: Dictionary of services information
-            
+
         Returns:
             Formatted text string
         """
         text = "BLE Services & Characteristics:\n"
         text += "=" * 50 + "\n\n"
-        
+
         for service_uuid, service_info in services.items():
             text += f"Service: {service_info['description']}\n"
             text += f"  UUID: {service_uuid}\n"
-            
+
             if service_info['characteristics']:
-                text += f"  Characteristics:\n"
+                text += "  Characteristics:\n"
                 for char in service_info['characteristics']:
                     text += f"    • {char['description']}\n"
                     text += f"      UUID: {char['uuid']}\n"
-                    
+
                     # Format properties
                     props = char['properties']
                     if props:
@@ -413,22 +414,22 @@ class MainWindow(QMainWindow):
                         if 'indicate' in props:
                             props_list.append('Indicate')
                         text += f"      Properties: {', '.join(props_list) if props_list else str(props)}\n"
-                    
+
                     # Show descriptors if any
                     if char['descriptors']:
                         text += f"      Descriptors: {len(char['descriptors'])}\n"
-                    
+
                     text += "\n"
-            
+
             text += "\n"
-        
+
         return text
 
     @Slot(bool)
     def _on_connection_changed(self, connect: bool) -> None:
         """
         Handle connection state change request.
-        
+
         Args:
             connect: True to connect, False to disconnect
         """
@@ -455,7 +456,7 @@ class MainWindow(QMainWindow):
     def _on_start_dfu(self, image_path: Path) -> None:
         """
         Handle DFU start request.
-        
+
         Args:
             image_path: Path to firmware image
         """
@@ -473,7 +474,7 @@ class MainWindow(QMainWindow):
     async def _execute_dfu_async(self, image_path: Path) -> None:
         """
         Execute DFU workflow asynchronously.
-        
+
         Args:
             image_path: Path to firmware image
         """
@@ -527,7 +528,7 @@ class MainWindow(QMainWindow):
     def _on_dfu_progress(self, progress: DFUProgress) -> None:
         """
         Handle DFU progress update.
-        
+
         Args:
             progress: DFU progress information
         """
@@ -544,7 +545,7 @@ class MainWindow(QMainWindow):
     def _on_echo_requested(self, message: str) -> None:
         """
         Handle echo request.
-        
+
         Args:
             message: Message to echo
         """
@@ -562,7 +563,7 @@ class MainWindow(QMainWindow):
     async def _execute_echo_async(self, message: str) -> None:
         """
         Execute echo command asynchronously.
-        
+
         Args:
             message: Message to echo
         """
@@ -570,7 +571,7 @@ class MainWindow(QMainWindow):
             self.smp_tab.append_status(f"Sending echo: '{message}'")
             response = await self._smp_client.os_echo(message)
             self.smp_tab.update_echo_response(response)
-            
+
             # Verify echo matches
             if response == message:
                 self.smp_tab.append_status("✓ Echo verification successful - response matches")
@@ -616,7 +617,7 @@ class MainWindow(QMainWindow):
             self.smp_tab.append_status("Sending reset command...")
             await self._smp_client.os_reset()
             self.smp_tab.append_status("✓ Reset command sent - device should reboot")
-            
+
             # Device will disconnect, update UI
             await asyncio.sleep(1)  # Give device time to reset
             await self._disconnect_async()
@@ -625,18 +626,16 @@ class MainWindow(QMainWindow):
             # This is often expected as device may reset before responding
             logger.info("reset_command_result", error=str(e), note="device_may_have_reset")
             self.smp_tab.append_status("✓ Reset command sent (device may have reset before responding)")
-            
+
             # Still try to disconnect
-            try:
+            with contextlib.suppress(builtins.BaseException):
                 await self._disconnect_async()
-            except:
-                pass
 
     @Slot(dict)
     def _on_settings_changed(self, settings: dict) -> None:
         """
         Handle settings change.
-        
+
         Args:
             settings: New settings dictionary
         """

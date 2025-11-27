@@ -4,14 +4,14 @@ Fallback transport for USB CDC devices
 """
 
 import asyncio
+import contextlib
 import time
-from typing import Optional
 
 import serial
 import serial.tools.list_ports
 
 from app.smp.pdu import SMPPDU
-from app.util import bytes_to_hex, get_logger
+from app.util import get_logger
 
 logger = get_logger(__name__)
 
@@ -48,7 +48,7 @@ class SerialTransport:
     ):
         """
         Initialize serial transport.
-        
+
         Args:
             port: Serial port (e.g., "COM3")
             baudrate: Baud rate
@@ -60,7 +60,7 @@ class SerialTransport:
         self.timeout = timeout
         self.max_retries = max_retries
 
-        self._serial: Optional[serial.Serial] = None
+        self._serial: serial.Serial | None = None
         self._lock = asyncio.Lock()
 
     @property
@@ -71,7 +71,7 @@ class SerialTransport:
     async def connect(self) -> None:
         """
         Connect to serial port.
-        
+
         Raises:
             SerialTransportError: If connection fails
         """
@@ -110,10 +110,8 @@ class SerialTransport:
                 )
 
                 if self._serial:
-                    try:
+                    with contextlib.suppress(Exception):
                         self._serial.close()
-                    except Exception:
-                        pass
                     self._serial = None
 
                 if attempt < self.max_retries - 1:
@@ -140,14 +138,14 @@ class SerialTransport:
     async def send_and_receive(self, request: SMPPDU, timeout: float = 5.0) -> SMPPDU:
         """
         Send SMP request and receive response.
-        
+
         Args:
             request: SMP request PDU
             timeout: Response timeout in seconds
-            
+
         Returns:
             SMP response PDU
-            
+
         Raises:
             SerialTransportError: If send/receive fails
             TimeoutError: If response times out
@@ -186,7 +184,7 @@ class SerialTransport:
                     ),
                     timeout=timeout + 1.0,  # Extra timeout margin
                 )
-            except asyncio.TimeoutError:
+            except TimeoutError:
                 logger.error("serial_response_timeout", timeout=timeout)
                 raise TimeoutError(f"No response received within {timeout}s")
 
@@ -209,7 +207,7 @@ class SerialTransport:
     def _write_frame(self, data: bytes) -> None:
         """
         Write framed data to serial port (blocking).
-        
+
         Args:
             data: Data to write
         """
@@ -224,10 +222,10 @@ class SerialTransport:
     def _read_frame(self, timeout: float) -> bytes:
         """
         Read framed data from serial port (blocking).
-        
+
         Args:
             timeout: Read timeout in seconds
-            
+
         Returns:
             Received data frame
         """
@@ -264,7 +262,7 @@ class SerialTransport:
     async def get_mtu(self) -> int:
         """
         Get MTU (not applicable for serial, return large value).
-        
+
         Returns:
             Large MTU value (serial doesn't have MTU limit like BLE)
         """
@@ -274,7 +272,7 @@ class SerialTransport:
 def list_serial_ports() -> list[str]:
     """
     List available serial ports.
-    
+
     Returns:
         List of port names
     """
@@ -285,13 +283,13 @@ def list_serial_ports() -> list[str]:
     return port_names
 
 
-def find_serial_port(description_filter: Optional[str] = None) -> Optional[str]:
+def find_serial_port(description_filter: str | None = None) -> str | None:
     """
     Find a serial port by description.
-    
+
     Args:
         description_filter: Substring to match in port description
-        
+
     Returns:
         Port name or None if not found
     """

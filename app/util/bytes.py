@@ -2,16 +2,15 @@
 Byte manipulation utilities for SMP protocol
 """
 
-from typing import List
 
 
 def bytes_to_hex(data: bytes) -> str:
     """
     Convert bytes to hex string representation.
-    
+
     Args:
         data: Bytes to convert
-        
+
     Returns:
         Hex string (e.g., "01 02 03 FF")
     """
@@ -21,10 +20,10 @@ def bytes_to_hex(data: bytes) -> str:
 def format_size(size_bytes: int) -> str:
     """
     Format byte size as human-readable string.
-    
+
     Args:
         size_bytes: Size in bytes
-        
+
     Returns:
         Formatted string (e.g., "1.5 MB")
     """
@@ -38,10 +37,10 @@ def format_size(size_bytes: int) -> str:
 def format_speed(bytes_per_second: float) -> str:
     """
     Format transfer speed as human-readable string.
-    
+
     Args:
         bytes_per_second: Transfer speed in bytes/second
-        
+
     Returns:
         Formatted string (e.g., "125.5 KB/s")
     """
@@ -52,10 +51,10 @@ def calculate_crc16_xmodem(data: bytes) -> int:
     """
     Calculate CRC-16/XMODEM checksum.
     Used in some SMP implementations for verification.
-    
+
     Args:
         data: Data to checksum
-        
+
     Returns:
         16-bit CRC value
     """
@@ -63,22 +62,19 @@ def calculate_crc16_xmodem(data: bytes) -> int:
     for byte in data:
         crc ^= byte << 8
         for _ in range(8):
-            if crc & 0x8000:
-                crc = (crc << 1) ^ 0x1021
-            else:
-                crc = crc << 1
+            crc = crc << 1 ^ 4129 if crc & 32768 else crc << 1
             crc &= 0xFFFF
     return crc
 
 
-def chunk_bytes(data: bytes, chunk_size: int) -> List[bytes]:
+def chunk_bytes(data: bytes, chunk_size: int) -> list[bytes]:
     """
     Split bytes into chunks.
-    
+
     Args:
         data: Data to chunk
         chunk_size: Maximum size of each chunk
-        
+
     Returns:
         List of byte chunks
     """
@@ -88,12 +84,12 @@ def chunk_bytes(data: bytes, chunk_size: int) -> List[bytes]:
 def safe_decode(data: bytes, encoding: str = "utf-8", errors: str = "replace") -> str:
     """
     Safely decode bytes to string, handling invalid sequences.
-    
+
     Args:
         data: Bytes to decode
         encoding: Character encoding
         errors: Error handling strategy
-        
+
     Returns:
         Decoded string
     """

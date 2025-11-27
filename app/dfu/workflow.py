@@ -5,9 +5,9 @@ State machine for firmware update process
 
 import asyncio
 import time
+from collections.abc import Callable
 from dataclasses import dataclass
 from enum import Enum, auto
-from typing import Callable, Optional
 
 from app.smp import SMPClient
 from app.util import format_speed, get_logger
@@ -89,13 +89,13 @@ class DFUWorkflow:
         self,
         smp_client: SMPClient,
         device_identifier: str,
-        chunk_size: Optional[int] = None,
+        chunk_size: int | None = None,
         auto_confirm: bool = False,
         enable_resume: bool = True,
     ):
         """
         Initialize DFU workflow.
-        
+
         Args:
             smp_client: SMP client instance
             device_identifier: Device address or serial port
@@ -113,7 +113,7 @@ class DFUWorkflow:
         self.resume_manager = ResumeManager() if enable_resume else None
 
         self._cancel_flag = False
-        self._progress_callback: Optional[Callable[[DFUProgress], None]] = None
+        self._progress_callback: Callable[[DFUProgress], None] | None = None
 
         logger.info(
             "dfu_workflow_init",
@@ -126,7 +126,7 @@ class DFUWorkflow:
     def set_progress_callback(self, callback: Callable[[DFUProgress], None]) -> None:
         """
         Set progress callback.
-        
+
         Args:
             callback: Function to call with progress updates
         """
@@ -145,10 +145,10 @@ class DFUWorkflow:
     async def execute(self, image: ImageMetadata) -> bool:
         """
         Execute complete DFU workflow.
-        
+
         Args:
             image: Firmware image metadata
-            
+
         Returns:
             True if successful, False otherwise
         """
@@ -250,7 +250,7 @@ class DFUWorkflow:
     async def _query_slots(self) -> list:
         """
         Query image slots.
-        
+
         Returns:
             List of ImageSlot objects
         """
@@ -266,13 +266,13 @@ class DFUWorkflow:
 
         for slot in slots:
             logger.info("slot_info", slot=repr(slot))
-        
+
         return slots
 
     async def _prepare(self, image: ImageMetadata, slots: list) -> None:
         """
         Prepare for upload.
-        
+
         Args:
             image: Image to upload
             slots: List of current image slots
@@ -284,25 +284,25 @@ class DFUWorkflow:
 
         # Check if slot 1 (secondary) exists
         slot1_exists = any(slot.slot == 1 for slot in slots)
-        
+
         if slot1_exists:
             # Erase slot 1 for clean upload - prevents corrupted/partial image issues
             logger.info("dfu_erase_slot1_start", reason="clean_upload")
             self._update_progress(
                 DFUProgress(state=DFUState.PREPARING, message="Erasing secondary slot...")
             )
-            
+
             try:
                 await self.smp_client.img_erase(slot=1)
                 logger.info("dfu_erase_slot1_complete")
-                
+
                 # Clear resume state since we're starting fresh
                 if self.resume_manager:
                     self.resume_manager.clear_state(
                         self.device_identifier, image.sha256_hex
                     )
                     logger.info("resume_state_cleared", reason="slot_erased")
-                    
+
             except Exception as e:
                 logger.warning("dfu_erase_slot1_failed", error=str(e), note="continuing_anyway")
         else:
@@ -313,7 +313,7 @@ class DFUWorkflow:
                     self.device_identifier, image.sha256_hex
                 )
                 if resume_state:
-                    logger.info("resume_state_invalid", reason="slot1_not_found", 
+                    logger.info("resume_state_invalid", reason="slot1_not_found",
                                offset=resume_state.last_offset)
                     self.resume_manager.clear_state(
                         self.device_identifier, image.sha256_hex
@@ -335,10 +335,10 @@ class DFUWorkflow:
     async def _upload(self, image: ImageMetadata) -> bool:
         """
         Upload image with resume support.
-        
+
         Args:
             image: Image to upload
-            
+
         Returns:
             True if successful
         """
@@ -464,15 +464,15 @@ class DFUWorkflow:
         # Query slots to get the hash of the uploaded image in slot 1
         slots = await self.smp_client.img_list()
         logger.info("dfu_test_query_slots", slot_count=len(slots))
-        
+
         # Find slot 1 (secondary/uploaded image)
         slot1 = next((s for s in slots if s.slot == 1), None)
-        
+
         if not slot1:
             raise RuntimeError("Uploaded image not found in slot 1")
-        
+
         logger.info("dfu_test_using_hash", hash=slot1.hash.hex()[:16] + "...")
-        
+
         # Test using the MCUboot image hash from slot 1
         await self.smp_client.img_test(hash_bytes=slot1.hash)
         logger.info("dfu_test_image_complete")

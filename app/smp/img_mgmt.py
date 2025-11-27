@@ -5,7 +5,7 @@ Implements IMG_MGMT group (group 1) for DFU operations
 
 from dataclasses import dataclass
 from enum import IntEnum
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from app.util import get_logger
 
@@ -46,7 +46,7 @@ class ImgMgmtError(IntEnum):
 class ImageSlot:
     """
     Information about an image slot.
-    
+
     Attributes:
         slot: Slot number (0 = primary, 1 = secondary)
         version: Semantic version string (e.g., "1.0.0")
@@ -68,13 +68,13 @@ class ImageSlot:
     permanent: bool = False
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "ImageSlot":
+    def from_dict(cls, data: dict[str, Any]) -> "ImageSlot":
         """
         Parse ImageSlot from SMP response dictionary.
-        
+
         Args:
             data: CBOR-decoded image state
-            
+
         Returns:
             ImageSlot instance
         """
@@ -117,7 +117,7 @@ class ImageSlot:
 def build_list_request() -> bytes:
     """
     Build img_mgmt STATE (list) request payload.
-    
+
     Returns:
         CBOR-encoded payload
     """
@@ -126,16 +126,16 @@ def build_list_request() -> bytes:
     return cbor_codec.encode(payload)
 
 
-def parse_list_response(payload: bytes) -> List[ImageSlot]:
+def parse_list_response(payload: bytes) -> list[ImageSlot]:
     """
     Parse img_mgmt STATE (list) response.
-    
+
     Args:
         payload: CBOR-encoded response payload
-        
+
     Returns:
         List of ImageSlot objects
-        
+
     Raises:
         cbor_codec.CBORError: If response is invalid
     """
@@ -156,13 +156,13 @@ def build_upload_request(
     offset: int,
     data: bytes,
     image_num: int = 0,
-    total_size: Optional[int] = None,
-    sha: Optional[bytes] = None,
+    total_size: int | None = None,
+    sha: bytes | None = None,
     upgrade: bool = False,
 ) -> bytes:
     """
     Build img_mgmt UPLOAD request payload.
-    
+
     Args:
         offset: Offset within the image
         data: Image data chunk
@@ -170,11 +170,11 @@ def build_upload_request(
         total_size: Total image size (required for first chunk)
         sha: SHA-256 hash of complete image (optional, for verification)
         upgrade: Whether to mark as upgrade (test mode)
-        
+
     Returns:
         CBOR-encoded payload
     """
-    payload: Dict[str, Any] = {
+    payload: dict[str, Any] = {
         "off": offset,
         "data": data,
     }
@@ -209,16 +209,16 @@ def build_upload_request(
     return cbor_codec.encode(payload)
 
 
-def parse_upload_response(payload: bytes) -> Dict[str, Any]:
+def parse_upload_response(payload: bytes) -> dict[str, Any]:
     """
     Parse img_mgmt UPLOAD response.
-    
+
     Args:
         payload: CBOR-encoded response payload
-        
+
     Returns:
         Response dictionary with 'off' (next offset expected by device)
-        
+
     Raises:
         cbor_codec.CBORError: If response is invalid
     """
@@ -232,24 +232,24 @@ def parse_upload_response(payload: bytes) -> Dict[str, Any]:
     return data
 
 
-def build_test_request(hash_bytes: Optional[bytes] = None, confirm: bool = False) -> bytes:
+def build_test_request(hash_bytes: bytes | None = None, confirm: bool = False) -> bytes:
     """
     Build img_mgmt TEST request payload.
     Marks an uploaded image for testing on next boot.
-    
+
     IMPORTANT: The hash parameter should be the MCUboot image hash (from the image's TLV),
     NOT the SHA256 of the entire firmware file. The MCUboot hash is returned by the device
     in the img_list response after upload. If hash is None, the device will test the most
     recently uploaded image (standard approach).
-    
+
     Args:
         hash_bytes: MCUboot image hash (from TLV) to test (None = test most recent upload)
         confirm: If True, confirm image instead of test
-        
+
     Returns:
         CBOR-encoded payload
     """
-    payload: Dict[str, Any] = {
+    payload: dict[str, Any] = {
         "confirm": confirm,
     }
 
@@ -260,16 +260,16 @@ def build_test_request(hash_bytes: Optional[bytes] = None, confirm: bool = False
     return cbor_codec.encode(payload)
 
 
-def parse_test_response(payload: bytes) -> Dict[str, Any]:
+def parse_test_response(payload: bytes) -> dict[str, Any]:
     """
     Parse img_mgmt TEST response.
-    
+
     Args:
         payload: CBOR-encoded response payload
-        
+
     Returns:
         Response dictionary
-        
+
     Raises:
         cbor_codec.CBORError: If response is invalid
     """
@@ -283,10 +283,10 @@ def build_erase_request(slot: int = 1) -> bytes:
     """
     Build img_mgmt ERASE request payload.
     Erases an image slot.
-    
+
     Args:
         slot: Slot number to erase (default 1 = secondary)
-        
+
     Returns:
         CBOR-encoded payload
     """
@@ -295,16 +295,16 @@ def build_erase_request(slot: int = 1) -> bytes:
     return cbor_codec.encode(payload)
 
 
-def parse_erase_response(payload: bytes) -> Dict[str, Any]:
+def parse_erase_response(payload: bytes) -> dict[str, Any]:
     """
     Parse img_mgmt ERASE response.
-    
+
     Args:
         payload: CBOR-encoded response payload
-        
+
     Returns:
         Response dictionary
-        
+
     Raises:
         cbor_codec.CBORError: If response is invalid
     """

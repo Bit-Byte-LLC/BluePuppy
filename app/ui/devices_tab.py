@@ -3,10 +3,9 @@ Devices tab - BLE/Serial device discovery and connection
 """
 
 import asyncio
-from typing import Optional
 
 from bleak.backends.device import BLEDevice
-from PySide6.QtCore import Qt, Signal, Slot
+from PySide6.QtCore import Signal, Slot
 from PySide6.QtWidgets import (
     QComboBox,
     QGroupBox,
@@ -34,10 +33,10 @@ class DevicesTab(QWidget):
     device_selected = Signal(object)  # Emits BLEDevice or serial port string
     connection_changed = Signal(bool)  # Emits connection state
 
-    def __init__(self, parent: Optional[QWidget] = None):
+    def __init__(self, parent: QWidget | None = None):
         super().__init__(parent)
         self._devices: list[BLEDevice] = []
-        self._selected_device: Optional[BLEDevice] = None
+        self._selected_device: BLEDevice | None = None
         self._setup_ui()
 
     def _setup_ui(self) -> None:
@@ -229,7 +228,7 @@ class DevicesTab(QWidget):
     def set_connected(self, connected: bool) -> None:
         """
         Update connection status.
-        
+
         Args:
             connected: Connection state
         """

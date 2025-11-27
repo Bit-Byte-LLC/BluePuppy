@@ -2,13 +2,11 @@
 Integration tests with mock SMP peripheral
 """
 
-import asyncio
-from typing import Dict
 
 import pytest
 
 from app.smp import SMPClient
-from app.smp.pdu import SMPGroup, SMPOp, SMPPDU
+from app.smp.pdu import SMPPDU, SMPGroup, SMPOp
 
 
 class MockTransport:
@@ -41,7 +39,6 @@ class MockTransport:
         self.requests.append(request)
 
         # Create mock response
-        from app.smp import cbor_codec
         from app.smp.pdu import SMPHeader
 
         # Simple echo response for testing

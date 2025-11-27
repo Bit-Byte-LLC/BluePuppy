@@ -4,12 +4,12 @@ Coordinates SMP command execution over a transport
 """
 
 import asyncio
-from typing import Any, Dict, List, Optional, Protocol
+from typing import Any, Protocol
 
 from app.util import get_logger
 
 from . import cbor_codec, img_mgmt, pdu
-from .pdu import SMPGroup, SMPPDU
+from .pdu import SMPPDU, SMPGroup
 
 logger = get_logger(__name__)
 
@@ -23,14 +23,14 @@ class SMPTransport(Protocol):
     async def send_and_receive(self, request: SMPPDU, timeout: float = 5.0) -> SMPPDU:
         """
         Send an SMP request and wait for response.
-        
+
         Args:
             request: SMP request PDU
             timeout: Response timeout in seconds
-            
+
         Returns:
             SMP response PDU
-            
+
         Raises:
             TimeoutError: If response times out
             Exception: On transport errors
@@ -40,7 +40,7 @@ class SMPTransport(Protocol):
     async def get_mtu(self) -> int:
         """
         Get the current MTU (Maximum Transmission Unit).
-        
+
         Returns:
             MTU size in bytes
         """
@@ -68,7 +68,7 @@ class SMPClient:
     def __init__(self, transport: SMPTransport):
         """
         Initialize SMP client.
-        
+
         Args:
             transport: Transport implementation (BLE or Serial)
         """
@@ -92,17 +92,17 @@ class SMPClient:
     ) -> bytes:
         """
         Send an SMP command and get response payload.
-        
+
         Args:
             group_id: SMP group ID
             command_id: Command ID within group
             payload: CBOR-encoded request payload
             is_write: True for write operations, False for read
             timeout: Response timeout in seconds
-            
+
         Returns:
             CBOR-encoded response payload
-            
+
         Raises:
             TimeoutError: If response times out
             ValueError: If response validation fails
@@ -146,13 +146,13 @@ class SMPClient:
 
     # ========== Image Management Commands ==========
 
-    async def img_list(self, timeout: float = 5.0) -> List[img_mgmt.ImageSlot]:
+    async def img_list(self, timeout: float = 5.0) -> list[img_mgmt.ImageSlot]:
         """
         List image slots and their states.
-        
+
         Args:
             timeout: Response timeout in seconds
-            
+
         Returns:
             List of ImageSlot objects
         """
@@ -176,14 +176,14 @@ class SMPClient:
         offset: int,
         data: bytes,
         image_num: int = 0,
-        total_size: Optional[int] = None,
-        sha: Optional[bytes] = None,
+        total_size: int | None = None,
+        sha: bytes | None = None,
         upgrade: bool = False,
         timeout: float = 10.0,
     ) -> int:
         """
         Upload image data chunk.
-        
+
         Args:
             offset: Offset within the image
             data: Image data chunk
@@ -192,7 +192,7 @@ class SMPClient:
             sha: SHA-256 hash of complete image (optional)
             upgrade: Whether to mark as upgrade (test mode)
             timeout: Response timeout in seconds
-            
+
         Returns:
             Next expected offset from device
         """
@@ -227,19 +227,19 @@ class SMPClient:
         return next_offset
 
     async def img_test(
-        self, hash_bytes: Optional[bytes] = None, timeout: float = 5.0
-    ) -> Dict[str, Any]:
+        self, hash_bytes: bytes | None = None, timeout: float = 5.0
+    ) -> dict[str, Any]:
         """
         Mark image for testing on next boot.
-        
+
         IMPORTANT: Pass None for hash_bytes to test the most recently uploaded image.
         The hash parameter (if provided) must be the MCUboot image hash from the device's
         img_list response, NOT the SHA256 of the firmware file.
-        
+
         Args:
             hash_bytes: MCUboot image hash to test (None = test most recent upload, recommended)
             timeout: Response timeout in seconds
-            
+
         Returns:
             Response dictionary
         """
@@ -259,19 +259,19 @@ class SMPClient:
         return response_data
 
     async def img_confirm(
-        self, hash_bytes: Optional[bytes] = None, timeout: float = 5.0
-    ) -> Dict[str, Any]:
+        self, hash_bytes: bytes | None = None, timeout: float = 5.0
+    ) -> dict[str, Any]:
         """
         Confirm image (make it permanent).
-        
+
         IMPORTANT: Pass None for hash_bytes to confirm the active image (standard approach).
         The hash parameter (if provided) must be the MCUboot image hash from the device's
         img_list response, NOT the SHA256 of the firmware file.
-        
+
         Args:
             hash_bytes: MCUboot image hash to confirm (None = confirm active image, recommended)
             timeout: Response timeout in seconds
-            
+
         Returns:
             Response dictionary
         """
@@ -290,14 +290,14 @@ class SMPClient:
         logger.info("img_confirm_complete")
         return response_data
 
-    async def img_erase(self, slot: int = 1, timeout: float = 30.0) -> Dict[str, Any]:
+    async def img_erase(self, slot: int = 1, timeout: float = 30.0) -> dict[str, Any]:
         """
         Erase image slot.
-        
+
         Args:
             slot: Slot number to erase (default 1 = secondary)
             timeout: Response timeout in seconds (erase can be slow)
-            
+
         Returns:
             Response dictionary
         """
@@ -321,11 +321,11 @@ class SMPClient:
     async def os_echo(self, message: str, timeout: float = 5.0) -> str:
         """
         Send echo request to device.
-        
+
         Args:
             message: Message to echo
             timeout: Response timeout in seconds
-            
+
         Returns:
             Echo response from device
         """
@@ -349,7 +349,7 @@ class SMPClient:
     async def os_reset(self, timeout: float = 5.0) -> None:
         """
         Reset (reboot) the device.
-        
+
         Args:
             timeout: Response timeout in seconds
         """

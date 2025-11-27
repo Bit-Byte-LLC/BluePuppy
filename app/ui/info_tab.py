@@ -2,7 +2,6 @@
 Info tab - Device and image information display
 """
 
-from typing import Optional
 
 from PySide6.QtWidgets import (
     QGroupBox,
@@ -21,7 +20,7 @@ class InfoTab(QWidget):
     Info tab for displaying device and image information.
     """
 
-    def __init__(self, parent: Optional[QWidget] = None):
+    def __init__(self, parent: QWidget | None = None):
         super().__init__(parent)
         self._setup_ui()
 
@@ -54,7 +53,7 @@ class InfoTab(QWidget):
     def update_slots_info(self, slots_text: str) -> None:
         """
         Update image slots information.
-        
+
         Args:
             slots_text: Formatted slots information
         """
@@ -63,7 +62,7 @@ class InfoTab(QWidget):
     def update_device_info(self, device_text: str) -> None:
         """
         Update device information.
-        
+
         Args:
             device_text: Formatted device information
         """

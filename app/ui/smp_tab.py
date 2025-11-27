@@ -2,9 +2,8 @@
 SMP tab - SMP operations interface
 """
 
-from typing import Optional
 
-from PySide6.QtCore import Qt, Signal, Slot
+from PySide6.QtCore import Signal, Slot
 from PySide6.QtWidgets import (
     QGroupBox,
     QHBoxLayout,
@@ -29,7 +28,7 @@ class SMPTab(QWidget):
     echo_requested = Signal(str)  # Emits echo message
     reset_requested = Signal()
 
-    def __init__(self, parent: Optional[QWidget] = None):
+    def __init__(self, parent: QWidget | None = None):
         super().__init__(parent)
         self._is_connected = False
         self._setup_ui()
@@ -153,7 +152,7 @@ class SMPTab(QWidget):
     def set_connected(self, connected: bool) -> None:
         """
         Update UI based on connection state.
-        
+
         Args:
             connected: True if connected to device
         """
@@ -170,7 +169,7 @@ class SMPTab(QWidget):
     def update_echo_response(self, response: str) -> None:
         """
         Update echo response display.
-        
+
         Args:
             response: Echo response from device
         """
@@ -180,7 +179,7 @@ class SMPTab(QWidget):
     def append_status(self, message: str) -> None:
         """
         Append message to status log.
-        
+
         Args:
             message: Status message
         """

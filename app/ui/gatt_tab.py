@@ -3,21 +3,16 @@ GATT Testing tab for exploring and testing BLE characteristics
 """
 
 import asyncio
-from typing import Optional
 
-from PySide6.QtCore import QObject, Qt, Signal, Slot
+from PySide6.QtCore import Qt, Signal, Slot
 from PySide6.QtWidgets import (
-    QCheckBox,
-    QComboBox,
     QGroupBox,
     QHBoxLayout,
     QLabel,
     QLineEdit,
     QPlainTextEdit,
     QPushButton,
-    QScrollArea,
     QSplitter,
-    QTextEdit,
     QTreeWidget,
     QTreeWidgetItem,
     QVBoxLayout,
@@ -41,7 +36,7 @@ class GATTTab(QWidget):
 
     def __init__(self):
         super().__init__()
-        self._transport: Optional[BLETransport] = None
+        self._transport: BLETransport | None = None
         self._notification_callbacks = {}  # char_uuid -> callback
         self._setup_ui()
 
@@ -183,9 +178,9 @@ class GATTTab(QWidget):
         layout.addWidget(splitter)
 
         # Selected characteristic tracking
-        self._selected_char_uuid: Optional[str] = None
+        self._selected_char_uuid: str | None = None
 
-    def set_transport(self, transport: Optional[BLETransport]) -> None:
+    def set_transport(self, transport: BLETransport | None) -> None:
         """
         Set the BLE transport instance.
 
@@ -316,7 +311,7 @@ class GATTTab(QWidget):
         self.read_btn.setEnabled("read" in properties)
         self.write_with_response_btn.setEnabled("write" in properties)
         self.write_without_response_btn.setEnabled("write-without-response" in properties)
-        
+
         can_notify = "notify" in properties or "indicate" in properties
         self.enable_notify_btn.setEnabled(can_notify)
         self.disable_notify_btn.setEnabled(False)  # Will enable when notifications are active
@@ -369,11 +364,11 @@ class GATTTab(QWidget):
             try:
                 self.status_label.setText("Writing...")
                 self.status_label.setStyleSheet("color: #FFA500;")
-                
+
                 await self._transport.write_characteristic(
                     self._selected_char_uuid, data, response=with_response
                 )
-                
+
                 self.status_label.setText(f"Write successful ({len(data)} bytes)")
                 self.status_label.setStyleSheet("color: #4CAF50;")
                 logger.info(
@@ -408,16 +403,16 @@ class GATTTab(QWidget):
             try:
                 self.status_label.setText("Enabling notifications...")
                 self.status_label.setStyleSheet("color: #FFA500;")
-                
+
                 await self._transport.enable_characteristic_notifications(
                     char_uuid, notification_handler
                 )
-                
+
                 self._notification_callbacks[char_uuid] = notification_handler
-                
+
                 self.enable_notify_btn.setEnabled(False)
                 self.disable_notify_btn.setEnabled(True)
-                
+
                 self.status_label.setText("Notifications enabled")
                 self.status_label.setStyleSheet("color: #4CAF50;")
                 logger.info("gatt_notifications_enabled", uuid=char_uuid)
@@ -440,15 +435,15 @@ class GATTTab(QWidget):
             try:
                 self.status_label.setText("Disabling notifications...")
                 self.status_label.setStyleSheet("color: #FFA500;")
-                
+
                 await self._transport.disable_characteristic_notifications(char_uuid)
-                
+
                 if char_uuid in self._notification_callbacks:
                     del self._notification_callbacks[char_uuid]
-                
+
                 self.enable_notify_btn.setEnabled(True)
                 self.disable_notify_btn.setEnabled(False)
-                
+
                 self.status_label.setText("Notifications disabled")
                 self.status_label.setStyleSheet("color: #4CAF50;")
                 logger.info("gatt_notifications_disabled", uuid=char_uuid)

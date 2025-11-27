@@ -3,9 +3,8 @@ DFU tab - Firmware upload interface
 """
 
 from pathlib import Path
-from typing import Optional
 
-from PySide6.QtCore import Qt, Signal, Slot
+from PySide6.QtCore import Signal, Slot
 from PySide6.QtWidgets import (
     QFileDialog,
     QGroupBox,
@@ -33,9 +32,9 @@ class DFUTab(QWidget):
     start_dfu = Signal(Path)  # Emits image file path
     cancel_dfu = Signal()
 
-    def __init__(self, parent: Optional[QWidget] = None):
+    def __init__(self, parent: QWidget | None = None):
         super().__init__(parent)
-        self._image_path: Optional[Path] = None
+        self._image_path: Path | None = None
         self._setup_ui()
 
     def _setup_ui(self) -> None:
@@ -160,7 +159,7 @@ class DFUTab(QWidget):
     def update_progress(self, progress: DFUProgress) -> None:
         """
         Update DFU progress display.
-        
+
         Args:
             progress: DFU progress information
         """
@@ -185,7 +184,7 @@ class DFUTab(QWidget):
     def append_log(self, message: str) -> None:
         """
         Append message to log console.
-        
+
         Args:
             message: Log message
         """
@@ -194,7 +193,7 @@ class DFUTab(QWidget):
     def set_connected(self, connected: bool) -> None:
         """
         Update UI based on connection state.
-        
+
         Args:
             connected: Connection state
         """

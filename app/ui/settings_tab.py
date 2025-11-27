@@ -2,15 +2,13 @@
 Settings tab - Application configuration
 """
 
-from typing import Optional
 
-from PySide6.QtCore import Qt, Signal, Slot
+from PySide6.QtCore import Signal
 from PySide6.QtWidgets import (
     QCheckBox,
     QComboBox,
     QFormLayout,
     QGroupBox,
-    QLabel,
     QSpinBox,
     QVBoxLayout,
     QWidget,
@@ -28,7 +26,7 @@ class SettingsTab(QWidget):
 
     settings_changed = Signal(dict)  # Emits settings dictionary
 
-    def __init__(self, parent: Optional[QWidget] = None):
+    def __init__(self, parent: QWidget | None = None):
         super().__init__(parent)
         self._setup_ui()
 
@@ -113,7 +111,7 @@ class SettingsTab(QWidget):
     def get_settings(self) -> dict:
         """
         Get current settings as dictionary.
-        
+
         Returns:
             Settings dictionary
         """
@@ -130,7 +128,7 @@ class SettingsTab(QWidget):
     def set_settings(self, settings: dict) -> None:
         """
         Set settings from dictionary.
-        
+
         Args:
             settings: Settings dictionary
         """

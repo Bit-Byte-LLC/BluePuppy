@@ -4,7 +4,6 @@ Integrates PySide6 with asyncio using qasync
 """
 
 import sys
-from pathlib import Path
 
 import qasync
 from PySide6.QtWidgets import QApplication
@@ -16,7 +15,7 @@ from app.util import APP_NAME, APP_ORGANIZATION, APP_VERSION, get_logger, setup_
 def main() -> int:
     """
     Main application entry point.
-    
+
     Returns:
         Exit code
     """

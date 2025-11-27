@@ -4,7 +4,7 @@ Implements GATT-based SMP communication
 """
 
 import asyncio
-from typing import Optional
+import contextlib
 from uuid import UUID
 
 from bleak import BleakClient, BleakScanner
@@ -54,7 +54,7 @@ class BLETransport:
     ):
         """
         Initialize BLE transport.
-        
+
         Args:
             device: BLE device to connect to
             timeout: Default operation timeout
@@ -64,8 +64,8 @@ class BLETransport:
         self.timeout = timeout
         self.max_retries = max_retries
 
-        self._client: Optional[BleakClient] = None
-        self._smp_characteristic: Optional[BleakGATTCharacteristic] = None
+        self._client: BleakClient | None = None
+        self._smp_characteristic: BleakGATTCharacteristic | None = None
         self._mtu: int = MIN_MTU
         self._response_queue: asyncio.Queue[bytes] = asyncio.Queue()
         self._notification_lock = asyncio.Lock()
@@ -83,7 +83,7 @@ class BLETransport:
     async def connect(self) -> None:
         """
         Connect to BLE device and discover SMP service.
-        
+
         Raises:
             BLETransportError: If connection or service discovery fails
         """
@@ -132,10 +132,8 @@ class BLETransport:
                 )
 
                 if self._client:
-                    try:
+                    with contextlib.suppress(Exception):
                         await self._client.disconnect()
-                    except Exception:
-                        pass
                     self._client = None
 
                 if attempt < self.max_retries - 1:
@@ -166,10 +164,10 @@ class BLETransport:
     async def _discover_smp_service(self) -> bool:
         """
         Try to discover SMP GATT service and characteristic.
-        
+
         Returns:
             True if SMP service found and configured, False otherwise
-            
+
         Raises:
             BLETransportError: If not connected
         """
@@ -203,13 +201,13 @@ class BLETransport:
             uuid=str(SMP_CHARACTERISTIC_UUID),
             properties=smp_char.properties,
         )
-        
+
         return True
 
     async def _enable_notifications(self) -> None:
         """
         Enable notifications on SMP characteristic.
-        
+
         Raises:
             BLETransportError: If notification setup fails
         """
@@ -233,7 +231,7 @@ class BLETransport:
     ) -> None:
         """
         Handle incoming notifications from SMP characteristic.
-        
+
         Args:
             characteristic: Source characteristic
             data: Notification data
@@ -254,14 +252,14 @@ class BLETransport:
     async def send_and_receive(self, request: SMPPDU, timeout: float = 5.0) -> SMPPDU:
         """
         Send SMP request and receive response.
-        
+
         Args:
             request: SMP request PDU
             timeout: Response timeout in seconds
-            
+
         Returns:
             SMP response PDU
-            
+
         Raises:
             BLETransportError: If send/receive fails
             TimeoutError: If response times out
@@ -301,7 +299,7 @@ class BLETransport:
                 self._response_queue.get(),
                 timeout=timeout,
             )
-        except asyncio.TimeoutError:
+        except TimeoutError:
             logger.error("ble_response_timeout", timeout=timeout)
             raise TimeoutError(f"No response received within {timeout}s")
 
@@ -321,7 +319,7 @@ class BLETransport:
     async def get_mtu(self) -> int:
         """
         Get current MTU.
-        
+
         Returns:
             MTU size in bytes
         """
@@ -330,10 +328,10 @@ class BLETransport:
     def calculate_max_payload_size(self, smp_header_size: int = 8) -> int:
         """
         Calculate maximum SMP payload size based on MTU.
-        
+
         Args:
             smp_header_size: Size of SMP header (default 8 bytes)
-            
+
         Returns:
             Maximum payload size in bytes
         """
@@ -354,10 +352,10 @@ class BLETransport:
     async def get_all_services_and_characteristics(self) -> dict:
         """
         Get all GATT services and their characteristics.
-        
+
         Returns:
             Dictionary with services and characteristics info
-            
+
         Raises:
             BLETransportError: If not connected
         """
@@ -367,7 +365,7 @@ class BLETransport:
         logger.debug("ble_get_all_services_start")
 
         services_info = {}
-        
+
         try:
             for service in self._client.services:
                 service_uuid = str(service.uuid)
@@ -376,7 +374,7 @@ class BLETransport:
                     "description": service.description or "Unknown Service",
                     "characteristics": []
                 }
-                
+
                 for char in service.characteristics:
                     char_uuid = str(char.uuid)
                     char_info = {
@@ -385,7 +383,7 @@ class BLETransport:
                         "properties": char.properties,
                         "descriptors": []
                     }
-                    
+
                     # Get descriptors
                     for desc in char.descriptors:
                         desc_info = {
@@ -393,14 +391,14 @@ class BLETransport:
                             "description": desc.description or "Unknown Descriptor"
                         }
                         char_info["descriptors"].append(desc_info)
-                    
+
                     service_info["characteristics"].append(char_info)
-                
+
                 services_info[service_uuid] = service_info
-            
+
             logger.info("ble_get_all_services_complete", service_count=len(services_info))
             return services_info
-            
+
         except Exception as e:
             logger.error("ble_get_all_services_failed", error=str(e))
             raise BLETransportError(f"Failed to get services: {e}")
@@ -408,13 +406,13 @@ class BLETransport:
     async def read_characteristic(self, char_uuid: str) -> bytes:
         """
         Read value from a GATT characteristic.
-        
+
         Args:
             char_uuid: UUID of the characteristic to read
-            
+
         Returns:
             Characteristic value as bytes
-            
+
         Raises:
             BLETransportError: If not connected or read fails
         """
@@ -436,12 +434,12 @@ class BLETransport:
     ) -> None:
         """
         Write value to a GATT characteristic.
-        
+
         Args:
             char_uuid: UUID of the characteristic to write
             data: Data to write
             response: Whether to wait for write response (True) or write without response (False)
-            
+
         Raises:
             BLETransportError: If not connected or write fails
         """
@@ -467,11 +465,11 @@ class BLETransport:
     ) -> None:
         """
         Enable notifications for a GATT characteristic.
-        
+
         Args:
             char_uuid: UUID of the characteristic
             callback: Callback function to handle notifications (characteristic, data)
-            
+
         Raises:
             BLETransportError: If not connected or enabling fails
         """
@@ -490,10 +488,10 @@ class BLETransport:
     async def disable_characteristic_notifications(self, char_uuid: str) -> None:
         """
         Disable notifications for a GATT characteristic.
-        
+
         Args:
             char_uuid: UUID of the characteristic
-            
+
         Raises:
             BLETransportError: If not connected or disabling fails
         """
@@ -510,14 +508,14 @@ class BLETransport:
             raise BLETransportError(f"Failed to disable notifications for {char_uuid}: {e}")
 
 
-async def scan_devices(timeout: float = 10.0, name_filter: Optional[str] = None) -> list[BLEDevice]:
+async def scan_devices(timeout: float = 10.0, name_filter: str | None = None) -> list[BLEDevice]:
     """
     Scan for BLE devices.
-    
+
     Args:
         timeout: Scan duration in seconds
         name_filter: Optional name filter (case-insensitive substring match)
-        
+
     Returns:
         List of discovered BLE devices
     """

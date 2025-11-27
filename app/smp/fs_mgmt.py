@@ -3,7 +3,7 @@ File System Management (fs_mgmt) SMP commands
 Implements FS_MGMT group (group 8) for file operations and hash verification
 """
 
-from typing import Any, Dict, Optional
+from typing import Any
 
 from app.util import get_logger
 
@@ -24,15 +24,15 @@ def build_hash_request(name: str = "", hash_type: str = "sha256") -> bytes:
     """
     Build fs_mgmt HASH_CHECKSUM request payload.
     Can be used to verify uploaded image integrity.
-    
+
     Args:
         name: File name/path (optional, device-specific)
         hash_type: Hash algorithm ("sha256" or "crc32")
-        
+
     Returns:
         CBOR-encoded payload
     """
-    payload: Dict[str, Any] = {
+    payload: dict[str, Any] = {
         "type": hash_type,
     }
 
@@ -43,16 +43,16 @@ def build_hash_request(name: str = "", hash_type: str = "sha256") -> bytes:
     return cbor_codec.encode(payload)
 
 
-def parse_hash_response(payload: bytes) -> Dict[str, Any]:
+def parse_hash_response(payload: bytes) -> dict[str, Any]:
     """
     Parse fs_mgmt HASH_CHECKSUM response.
-    
+
     Args:
         payload: CBOR-encoded response payload
-        
+
     Returns:
         Response dictionary with hash/checksum result
-        
+
     Raises:
         cbor_codec.CBORError: If response is invalid
     """
@@ -67,10 +67,10 @@ def build_stat_request(name: str) -> bytes:
     """
     Build fs_mgmt STAT request payload.
     Gets file statistics (size, etc.).
-    
+
     Args:
         name: File name/path
-        
+
     Returns:
         CBOR-encoded payload
     """
@@ -79,16 +79,16 @@ def build_stat_request(name: str) -> bytes:
     return cbor_codec.encode(payload)
 
 
-def parse_stat_response(payload: bytes) -> Dict[str, Any]:
+def parse_stat_response(payload: bytes) -> dict[str, Any]:
     """
     Parse fs_mgmt STAT response.
-    
+
     Args:
         payload: CBOR-encoded response payload
-        
+
     Returns:
         Response dictionary with file statistics
-        
+
     Raises:
         cbor_codec.CBORError: If response is invalid
     """

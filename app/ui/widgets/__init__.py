@@ -3,9 +3,7 @@ Custom UI widgets
 Reusable components for the application
 """
 
-from typing import Optional
-
-from PySide6.QtCore import Qt, Signal
+from PySide6.QtCore import Qt
 from PySide6.QtGui import QFont
 from PySide6.QtWidgets import (
     QHBoxLayout,
@@ -22,7 +20,7 @@ class ProgressWidget(QWidget):
     Enhanced progress bar with speed and ETA display.
     """
 
-    def __init__(self, parent: Optional[QWidget] = None):
+    def __init__(self, parent: QWidget | None = None):
         super().__init__(parent)
         self._setup_ui()
 
@@ -60,7 +58,7 @@ class ProgressWidget(QWidget):
     ) -> None:
         """
         Update progress display.
-        
+
         Args:
             percent: Progress percentage (0-100)
             speed: Transfer speed string
@@ -82,7 +80,7 @@ class LogConsole(QTextEdit):
     Log console widget with auto-scroll and monospace font.
     """
 
-    def __init__(self, parent: Optional[QWidget] = None):
+    def __init__(self, parent: QWidget | None = None):
         super().__init__(parent)
         self._setup_ui()
 
@@ -109,7 +107,7 @@ class LogConsole(QTextEdit):
     def append_log(self, message: str) -> None:
         """
         Append a log message.
-        
+
         Args:
             message: Log message
         """

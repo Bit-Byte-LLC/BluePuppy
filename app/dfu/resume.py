@@ -7,7 +7,6 @@ import json
 from dataclasses import asdict, dataclass
 from datetime import datetime
 from pathlib import Path
-from typing import Optional
 
 from app.util import get_logger
 
@@ -42,10 +41,10 @@ class ResumeManager:
     Manages DFU resume state persistence.
     """
 
-    def __init__(self, state_dir: Optional[Path] = None):
+    def __init__(self, state_dir: Path | None = None):
         """
         Initialize resume manager.
-        
+
         Args:
             state_dir: Directory for state files (defaults to AppData/Local)
         """
@@ -60,11 +59,11 @@ class ResumeManager:
     def _get_state_file(self, device_address: str, image_sha256: str) -> Path:
         """
         Get state file path for a device and image.
-        
+
         Args:
             device_address: Device BLE address or serial port
             image_sha256: Image SHA-256 hash
-            
+
         Returns:
             Path to state file
         """
@@ -83,7 +82,7 @@ class ResumeManager:
     ) -> None:
         """
         Save resume state.
-        
+
         Args:
             device_address: Device identifier
             image_sha256: Image SHA-256 hash
@@ -115,14 +114,14 @@ class ResumeManager:
 
     def load_state(
         self, device_address: str, image_sha256: str
-    ) -> Optional[ResumeState]:
+    ) -> ResumeState | None:
         """
         Load resume state.
-        
+
         Args:
             device_address: Device identifier
             image_sha256: Image SHA-256 hash
-            
+
         Returns:
             ResumeState if found, None otherwise
         """
@@ -152,7 +151,7 @@ class ResumeManager:
     def clear_state(self, device_address: str, image_sha256: str) -> None:
         """
         Clear resume state (after successful completion).
-        
+
         Args:
             device_address: Device identifier
             image_sha256: Image SHA-256 hash
@@ -178,7 +177,7 @@ class ResumeManager:
     def list_states(self) -> list[ResumeState]:
         """
         List all saved resume states.
-        
+
         Returns:
             List of ResumeState objects
         """
@@ -200,17 +199,17 @@ def calculate_resume_offset(
     current_image_size: int,
     saved_offset: int,
     saved_image_size: int,
-) -> Optional[int]:
+) -> int | None:
     """
     Calculate safe resume offset.
-    
+
     Validates that the resume state is compatible with current image.
-    
+
     Args:
         current_image_size: Current image size
         saved_offset: Last uploaded offset from saved state
         saved_image_size: Image size from saved state
-        
+
     Returns:
         Safe resume offset, or None if resume not possible
     """

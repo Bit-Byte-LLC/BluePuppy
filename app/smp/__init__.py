@@ -24,12 +24,14 @@ from .img_mgmt import (
 )
 from .pdu import (
     SMP_HEADER_SIZE,
+    SMPPDU,
     SMPError,
     SMPGroup,
     SMPHeader,
     SMPOp,
-    SMPPDU,
     create_request,
+)
+from .pdu import (
     validate_response as validate_pdu_response,
 )
 

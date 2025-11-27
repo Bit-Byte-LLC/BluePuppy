@@ -1,6 +1,12 @@
 """Transport package initialization."""
 
-from .ble import BLETransport, BLETransportError, SMP_CHARACTERISTIC_UUID, SMP_SERVICE_UUID, scan_devices
+from .ble import (
+    SMP_CHARACTERISTIC_UUID,
+    SMP_SERVICE_UUID,
+    BLETransport,
+    BLETransportError,
+    scan_devices,
+)
 from .serial import (
     SerialTransport,
     SerialTransportError,

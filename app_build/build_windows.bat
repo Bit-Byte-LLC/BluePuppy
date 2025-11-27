@@ -57,7 +57,15 @@ if %ERRORLEVEL% NEQ 0 (
 )
 
 echo.
-echo [5/5] Building with PyInstaller...
+echo [5/6] Generating version info...
+%PYTHON_EXE% app_build\generate_version_info.py
+if %ERRORLEVEL% NEQ 0 (
+    echo ERROR: Failed to generate version info
+    exit /b 1
+)
+
+echo.
+echo [6/6] Building with PyInstaller...
 
 REM Clean previous builds
 if exist dist rmdir /s /q dist

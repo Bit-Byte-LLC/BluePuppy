@@ -3,7 +3,7 @@ CBOR encoding/decoding utilities for SMP protocol
 Wraps cbor2 with error handling and validation
 """
 
-from typing import Any, Dict, Optional
+from typing import Any
 
 import cbor2
 
@@ -18,16 +18,16 @@ class CBORError(Exception):
     pass
 
 
-def encode(data: Dict[str, Any]) -> bytes:
+def encode(data: dict[str, Any]) -> bytes:
     """
     Encode dictionary to CBOR bytes.
-    
+
     Args:
         data: Dictionary to encode
-        
+
     Returns:
         CBOR-encoded bytes
-        
+
     Raises:
         CBORError: If encoding fails
     """
@@ -40,40 +40,40 @@ def encode(data: Dict[str, Any]) -> bytes:
         raise CBORError(f"Failed to encode CBOR: {e}") from e
 
 
-def decode(data: bytes) -> Dict[str, Any]:
+def decode(data: bytes) -> dict[str, Any]:
     """
     Decode CBOR bytes to dictionary.
-    
+
     Args:
         data: CBOR-encoded bytes
-        
+
     Returns:
         Decoded dictionary
-        
+
     Raises:
         CBORError: If decoding fails
     """
     try:
         decoded = cbor2.loads(data)
         logger.debug("cbor_decode", size=len(data), decoded=decoded)
-        
+
         # Validate it's a dictionary
         if not isinstance(decoded, dict):
             raise CBORError(f"Expected dict, got {type(decoded)}")
-        
+
         return decoded
     except Exception as e:
         logger.error("cbor_decode_failed", error=str(e), data_len=len(data))
         raise CBORError(f"Failed to decode CBOR: {e}") from e
 
 
-def safe_decode(data: bytes) -> Optional[Dict[str, Any]]:
+def safe_decode(data: bytes) -> dict[str, Any] | None:
     """
     Safely decode CBOR bytes, returning None on error.
-    
+
     Args:
         data: CBOR-encoded bytes
-        
+
     Returns:
         Decoded dictionary or None if decoding fails
     """
@@ -83,14 +83,14 @@ def safe_decode(data: bytes) -> Optional[Dict[str, Any]]:
         return None
 
 
-def validate_response(data: Dict[str, Any], required_keys: Optional[list[str]] = None) -> None:
+def validate_response(data: dict[str, Any], required_keys: list[str] | None = None) -> None:
     """
     Validate SMP response structure.
-    
+
     Args:
         data: Decoded CBOR response
         required_keys: List of required keys (optional)
-        
+
     Raises:
         CBORError: If validation fails
     """
@@ -100,7 +100,7 @@ def validate_response(data: Dict[str, Any], required_keys: Optional[list[str]] =
         if rc != 0:
             error_msg = data.get("rsn", f"SMP error code: {rc}")
             raise CBORError(f"SMP returned error: {error_msg} (rc={rc})")
-    
+
     # Check required keys
     if required_keys:
         missing = [key for key in required_keys if key not in data]

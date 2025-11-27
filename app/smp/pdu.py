@@ -6,9 +6,8 @@ Based on mcumgr protocol specification
 import struct
 from dataclasses import dataclass
 from enum import IntEnum
-from typing import Optional
 
-from app.util import bytes_to_hex, get_logger
+from app.util import get_logger
 
 logger = get_logger(__name__)
 
@@ -64,7 +63,7 @@ SMP_HEADER_STRUCT = struct.Struct(">BBHHBB")
 class SMPHeader:
     """
     SMP header structure.
-    
+
     The header format (version 1):
     - op (1 byte): Operation code (READ, WRITE, etc.)
     - flags (1 byte): Reserved flags
@@ -84,7 +83,7 @@ class SMPHeader:
     def pack(self) -> bytes:
         """
         Pack header to bytes.
-        
+
         Returns:
             8-byte header
         """
@@ -101,13 +100,13 @@ class SMPHeader:
     def unpack(cls, data: bytes) -> "SMPHeader":
         """
         Unpack header from bytes.
-        
+
         Args:
             data: At least 8 bytes of header data
-            
+
         Returns:
             Parsed SMPHeader
-            
+
         Raises:
             ValueError: If data is too short or invalid
         """
@@ -151,7 +150,7 @@ class SMPPDU:
     def pack(self) -> bytes:
         """
         Pack PDU to bytes.
-        
+
         Returns:
             Complete PDU (header + payload)
         """
@@ -161,13 +160,13 @@ class SMPPDU:
     def unpack(cls, data: bytes) -> "SMPPDU":
         """
         Unpack PDU from bytes.
-        
+
         Args:
             data: Complete PDU bytes
-            
+
         Returns:
             Parsed SMPPDU
-            
+
         Raises:
             ValueError: If data is invalid
         """
@@ -199,14 +198,14 @@ def create_request(
 ) -> SMPPDU:
     """
     Create an SMP request PDU.
-    
+
     Args:
         group_id: SMP group ID
         command_id: Command ID within the group
         payload: CBOR-encoded payload
         sequence: Sequence number for matching responses
         is_write: True for write operations, False for read
-        
+
     Returns:
         Complete SMP request PDU
     """
@@ -234,11 +233,11 @@ def create_request(
 def validate_response(request: SMPPDU, response: SMPPDU) -> None:
     """
     Validate that a response matches the request.
-    
+
     Args:
         request: Original request PDU
         response: Response PDU to validate
-        
+
     Raises:
         ValueError: If response doesn't match request
     """

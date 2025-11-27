@@ -6,10 +6,10 @@ import pytest
 
 from app.smp.pdu import (
     SMP_HEADER_SIZE,
+    SMPPDU,
     SMPGroup,
     SMPHeader,
     SMPOp,
-    SMPPDU,
     create_request,
     validate_response,
 )

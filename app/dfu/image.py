@@ -7,7 +7,6 @@ import hashlib
 import zipfile
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Optional
 
 from app.util import format_size, get_logger
 
@@ -53,18 +52,18 @@ class ImageError(Exception):
 def load_image(file_path: Path) -> ImageMetadata:
     """
     Load and validate a firmware image file.
-    
+
     Supports:
     - Raw .bin files
     - MCUboot .img files
     - ZIP archives containing image files (nRF Connect, zephyr)
-    
+
     Args:
         file_path: Path to image file
-        
+
     Returns:
         ImageMetadata with file info and data
-        
+
     Raises:
         ImageError: If file is invalid or cannot be read
     """
@@ -83,13 +82,13 @@ def load_image(file_path: Path) -> ImageMetadata:
 def _load_raw_image(file_path: Path) -> ImageMetadata:
     """
     Load a raw binary image file.
-    
+
     Args:
         file_path: Path to .bin or .img file
-        
+
     Returns:
         ImageMetadata
-        
+
     Raises:
         ImageError: If file cannot be read
     """
@@ -126,15 +125,15 @@ def _load_from_zip(zip_path: Path) -> ImageMetadata:
     """
     Load image from a ZIP archive.
     Extracts the first .bin or .img file found.
-    
+
     Common in nRF Connect and Zephyr build outputs.
-    
+
     Args:
         zip_path: Path to ZIP file
-        
+
     Returns:
         ImageMetadata
-        
+
     Raises:
         ImageError: If ZIP is invalid or contains no image files
     """
@@ -201,16 +200,16 @@ def _load_from_zip(zip_path: Path) -> ImageMetadata:
 def validate_mcuboot_header(data: bytes) -> bool:
     """
     Validate MCUboot image header.
-    
+
     MCUboot images start with a specific header:
     - Magic: 0x96f3b83d (4 bytes, little-endian at offset 0)
     - Load address (4 bytes at offset 4)
     - Header size (2 bytes at offset 8)
     - Image size (4 bytes at offset 12)
-    
+
     Args:
         data: Image data
-        
+
     Returns:
         True if valid MCUboot header detected
     """
@@ -236,11 +235,11 @@ def validate_mcuboot_header(data: bytes) -> bool:
 def chunk_image(data: bytes, chunk_size: int) -> list[bytes]:
     """
     Split image data into chunks for upload.
-    
+
     Args:
         data: Complete image data
         chunk_size: Maximum chunk size in bytes
-        
+
     Returns:
         List of data chunks
     """
