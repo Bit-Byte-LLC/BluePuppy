@@ -164,6 +164,11 @@ class MainWindow(QMainWindow):
             background-color: #2b2b2b;
             border-bottom: 2px solid #007acc;
         }
+        QTabBar::tab:disabled {
+            background-color: #1a1a1a;
+            color: #6c6c6c;
+            border: 1px solid #2a2a2a;
+        }
         QGroupBox {
             border: 1px solid #3c3c3c;
             border-radius: 4px;
@@ -321,14 +326,27 @@ class MainWindow(QMainWindow):
         self.dfu_tab.set_connected(enabled)
         self.smp_tab.set_connected(enabled)
 
-        # Optionally gray out the tabs or add visual indicator
+        # Update tab visual state
         dfu_index = self.tabs.indexOf(self.dfu_tab)
         smp_index = self.tabs.indexOf(self.smp_tab)
 
         if dfu_index >= 0:
             self.tabs.setTabEnabled(dfu_index, enabled)
+            if not enabled:
+                self.tabs.setTabText(dfu_index, "DFU (Disabled)")
+                self.tabs.setTabToolTip(dfu_index, "SMP service not available on this device")
+            else:
+                self.tabs.setTabText(dfu_index, "DFU")
+                self.tabs.setTabToolTip(dfu_index, "")
+
         if smp_index >= 0:
             self.tabs.setTabEnabled(smp_index, enabled)
+            if not enabled:
+                self.tabs.setTabText(smp_index, "SMP (Disabled)")
+                self.tabs.setTabToolTip(smp_index, "SMP service not available on this device")
+            else:
+                self.tabs.setTabText(smp_index, "SMP")
+                self.tabs.setTabToolTip(smp_index, "")
 
     async def _query_device_info(self) -> None:
         """Query and display device information."""

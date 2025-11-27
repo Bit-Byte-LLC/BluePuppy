@@ -454,7 +454,6 @@ Contributions are welcome! We appreciate bug reports, feature requests, and pull
    pytest
    
    # Check code quality
-   black app tests
    ruff check app tests
    mypy app
    ```
@@ -495,7 +494,6 @@ For new features, describe:
 For questions, issues, or feature requests:
 
 - **GitHub Issues**: [Report a bug](https://github.com/Bit-Byte-LLC/BluePuppy/issues)
-- **GitHub Discussions**: [Ask questions](https://github.com/Bit-Byte-LLC/BluePuppy/discussions)
 
 ## Acknowledgments
 
