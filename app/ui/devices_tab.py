@@ -141,28 +141,34 @@ class DevicesTab(QWidget):
         self.scan_button.setEnabled(False)
         self.scan_button.setText("Scanning...")
         self.devices_table.setRowCount(0)
+        self._devices = []
+
+        def on_device_detected(device):
+            """Handle device detection during scan."""
+            self._devices.append(device)
+            row = len(self._devices) - 1
+            self.devices_table.setRowCount(len(self._devices))
+            self.devices_table.setItem(
+                row, 0, QTableWidgetItem(device.name or "Unknown")
+            )
+            self.devices_table.setItem(
+                row, 1, QTableWidgetItem(device.address)
+            )
+            rssi = (
+                str(device.rssi) + " dBm"
+                if hasattr(device, "rssi") and device.rssi
+                else "N/A"
+            )
+            self.devices_table.setItem(row, 2, QTableWidgetItem(rssi))
+            self.devices_table.setItem(row, 3, QTableWidgetItem("--"))
 
         try:
             name_filter = self.name_filter_edit.text() or None
-            self._devices = await scan_devices(timeout=10.0, name_filter=name_filter)
-
-            # Populate table
-            self.devices_table.setRowCount(len(self._devices))
-            for row, device in enumerate(self._devices):
-                self.devices_table.setItem(
-                    row, 0, QTableWidgetItem(device.name or "Unknown")
-                )
-                self.devices_table.setItem(
-                    row, 1, QTableWidgetItem(device.address)
-                )
-                rssi = (
-                    str(device.rssi) + " dBm"
-                    if hasattr(device, "rssi") and device.rssi
-                    else "N/A"
-                )
-                self.devices_table.setItem(row, 2, QTableWidgetItem(rssi))
-                # Services would need advertisement data, showing placeholder
-                self.devices_table.setItem(row, 3, QTableWidgetItem("--"))
+            await scan_devices(
+                timeout=5.0,
+                name_filter=name_filter,
+                detection_callback=on_device_detected
+            )
 
             logger.info("ble_scan_complete", device_count=len(self._devices))
 

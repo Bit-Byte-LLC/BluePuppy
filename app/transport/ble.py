@@ -5,6 +5,7 @@ Implements GATT-based SMP communication
 
 import asyncio
 import contextlib
+from collections.abc import Callable
 from uuid import UUID
 
 from bleak import BleakClient, BleakScanner
@@ -508,29 +509,45 @@ class BLETransport:
             raise BLETransportError(f"Failed to disable notifications for {char_uuid}: {e}")
 
 
-async def scan_devices(timeout: float = 10.0, name_filter: str | None = None) -> list[BLEDevice]:
+async def scan_devices(
+    timeout: float = 5.0,
+    name_filter: str | None = None,
+    detection_callback: Callable | None = None
+) -> list[BLEDevice]:
     """
-    Scan for BLE devices.
+    Scan for BLE devices with progressive results.
 
     Args:
         timeout: Scan duration in seconds
         name_filter: Optional name filter (case-insensitive substring match)
+        detection_callback: Optional callback called when each device is discovered
 
     Returns:
         List of discovered BLE devices
     """
     logger.info("ble_scan_start", timeout=timeout, name_filter=name_filter)
 
-    devices = await BleakScanner.discover(timeout=timeout, return_adv=False)
+    discovered_devices = {}
+    name_filter_lower = name_filter.lower() if name_filter else None
 
-    # Filter by name if requested
-    if name_filter:
-        name_filter_lower = name_filter.lower()
-        devices = [
-            d
-            for d in devices
-            if d.name and name_filter_lower in d.name.lower()
-        ]
+    def detection_handler(device: BLEDevice, advertisement_data):
+        """Handle device detection during scan."""
+        # Filter by name if requested
+        if name_filter_lower and (not device.name or name_filter_lower not in device.name.lower()):
+            return
 
+        # Track unique devices by address
+        if device.address not in discovered_devices:
+            discovered_devices[device.address] = device
+            if detection_callback:
+                detection_callback(device)
+
+    # Use scanner with detection callback for progressive results
+    scanner = BleakScanner(detection_callback=detection_handler)
+    await scanner.start()
+    await asyncio.sleep(timeout)
+    await scanner.stop()
+
+    devices = list(discovered_devices.values())
     logger.info("ble_scan_complete", device_count=len(devices))
     return devices
