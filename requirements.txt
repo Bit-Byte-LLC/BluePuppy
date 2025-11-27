@@ -1,0 +1,33 @@
+# BluePuppy - Production Windows DFU App
+# Pinned dependencies for reproducible builds
+
+# Core BLE and UI
+bleak>=1.0.0  # Python 3.13 compatible
+PySide6>=6.6.0
+PySide6-Addons>=6.6.0
+PySide6-Essentials>=6.6.0
+qasync>=0.24.0
+
+# Protocol and serialization
+cbor2>=5.6.0
+pyserial>=3.5
+
+# Logging
+structlog>=23.0.0
+
+# Packaging
+PyInstaller>=6.0.0
+pyinstaller-hooks-contrib>=2024.0
+Pillow>=10.0.0
+
+# Development tools
+black>=23.12.0
+ruff>=0.1.0
+mypy>=1.7.0
+types-pyserial>=3.5.0.10
+
+# Testing
+pytest>=7.4.0
+pytest-asyncio>=0.21.0
+pytest-cov>=4.1.0
+pytest-mock>=3.12.0
