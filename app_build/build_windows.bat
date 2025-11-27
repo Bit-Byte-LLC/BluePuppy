@@ -71,7 +71,7 @@ REM Clean previous builds
 if exist dist rmdir /s /q dist
 if exist build rmdir /s /q build
 
-# Build using spec file
+REM Build using spec file
 %PYTHON_EXE% -m PyInstaller app_build\BluePuppy.spec
 if %ERRORLEVEL% NEQ 0 (
     echo ERROR: PyInstaller build failed

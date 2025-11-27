@@ -6,6 +6,7 @@ Provides structured logging with rotating file handlers
 import contextlib
 import logging
 import sys
+from collections.abc import Callable
 from logging.handlers import RotatingFileHandler
 from pathlib import Path
 
@@ -109,7 +110,7 @@ class LogCapture:
         """
         self.max_messages = max_messages
         self.messages: list[str] = []
-        self.callbacks: list[callable] = []
+        self.callbacks: list[Callable] = []
 
     def add_message(self, message: str) -> None:
         """Add a log message and notify callbacks."""
@@ -122,7 +123,7 @@ class LogCapture:
             with contextlib.suppress(Exception):
                 callback(message)  # Don't let callback errors break logging
 
-    def register_callback(self, callback: callable) -> None:
+    def register_callback(self, callback: Callable) -> None:
         """Register a callback to be notified of new messages."""
         self.callbacks.append(callback)
 

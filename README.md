@@ -7,7 +7,7 @@
 **Bluetooth Low Energy Testing & Development Tool**  
 GATT Testing • SMP Protocol • Device Firmware Updates (DFU) • Serial Communication
 
-![Version](https://img.shields.io/badge/version-1.0.0-blue)
+![Version](https://img.shields.io/badge/version-2.0.0-blue)
 ![Python](https://img.shields.io/badge/python-3.11+-green)
 ![License](https://img.shields.io/badge/license-MIT-orange)
 ![Platform](https://img.shields.io/badge/platform-windows-lightgrey)
@@ -512,7 +512,7 @@ title = {BluePuppy: Bluetooth Low Energy Testing and Development Tool},
    author = {{Bit Byte LLC - Open Source Projects Team}},
    year = {2025},
    url = {https://github.com/Bit-Byte-LLC/BluePuppy},
-   version = {1.0.0}
+   version = {2.0.0}
 }
 ```
 

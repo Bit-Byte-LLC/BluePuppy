@@ -313,8 +313,7 @@ class DFUWorkflow:
                     self.device_identifier, image.sha256_hex
                 )
                 if resume_state:
-                    logger.info("resume_state_invalid", reason="slot1_not_found",
-                               offset=resume_state.last_offset)
+                    logger.info("resume_state_invalid", reason="slot1_not_found", offset=resume_state.last_offset)
                     self.resume_manager.clear_state(
                         self.device_identifier, image.sha256_hex
                     )
