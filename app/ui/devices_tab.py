@@ -36,6 +36,7 @@ class DevicesTab(QWidget):
     def __init__(self, parent: QWidget | None = None):
         super().__init__(parent)
         self._devices: list[BLEDevice] = []
+        self._ble_rows_by_address: dict[str, int] = {}
         self._selected_device: BLEDevice | None = None
         self._setup_ui()
 
@@ -135,6 +136,22 @@ class DevicesTab(QWidget):
         else:
             self._scan_serial()
 
+    def _update_ble_device_row(self, row: int, device: BLEDevice) -> None:
+        """Insert or refresh a BLE device row in the table."""
+        self.devices_table.setItem(
+            row, 0, QTableWidgetItem(device.name or "Unknown")
+        )
+        self.devices_table.setItem(
+            row, 1, QTableWidgetItem(device.address)
+        )
+        rssi = (
+            str(device.rssi) + " dBm"
+            if hasattr(device, "rssi") and device.rssi
+            else "N/A"
+        )
+        self.devices_table.setItem(row, 2, QTableWidgetItem(rssi))
+        self.devices_table.setItem(row, 3, QTableWidgetItem("--"))
+
     async def _scan_ble_async(self) -> None:
         """Scan for BLE devices asynchronously."""
         logger.info("ble_scan_start")
@@ -142,25 +159,22 @@ class DevicesTab(QWidget):
         self.scan_button.setText("Scanning...")
         self.devices_table.setRowCount(0)
         self._devices = []
+        self._ble_rows_by_address = {}
+        self._selected_device = None
+        self.connect_button.setEnabled(False)
 
         def on_device_detected(device):
             """Handle device detection during scan."""
-            self._devices.append(device)
-            row = len(self._devices) - 1
-            self.devices_table.setRowCount(len(self._devices))
-            self.devices_table.setItem(
-                row, 0, QTableWidgetItem(device.name or "Unknown")
-            )
-            self.devices_table.setItem(
-                row, 1, QTableWidgetItem(device.address)
-            )
-            rssi = (
-                str(device.rssi) + " dBm"
-                if hasattr(device, "rssi") and device.rssi
-                else "N/A"
-            )
-            self.devices_table.setItem(row, 2, QTableWidgetItem(rssi))
-            self.devices_table.setItem(row, 3, QTableWidgetItem("--"))
+            row = self._ble_rows_by_address.get(device.address)
+            if row is None:
+                self._devices.append(device)
+                row = len(self._devices) - 1
+                self._ble_rows_by_address[device.address] = row
+                self.devices_table.setRowCount(len(self._devices))
+            else:
+                self._devices[row] = device
+
+            self._update_ble_device_row(row, device)
 
         try:
             name_filter = self.name_filter_edit.text() or None

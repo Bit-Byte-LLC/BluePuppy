@@ -11,6 +11,7 @@ from uuid import UUID
 from bleak import BleakClient, BleakScanner
 from bleak.backends.characteristic import BleakGATTCharacteristic
 from bleak.backends.device import BLEDevice
+from bleak.backends.scanner import AdvertisementData
 
 from app.smp.pdu import SMPPDU
 from app.util import bytes_to_hex, get_logger
@@ -509,10 +510,59 @@ class BLETransport:
             raise BLETransportError(f"Failed to disable notifications for {char_uuid}: {e}")
 
 
+def _normalize_device_name(name: str | None) -> str | None:
+    """Normalize a device name value for display and filtering."""
+    if not name:
+        return None
+
+    normalized_name = name.strip()
+    return normalized_name or None
+
+
+def _resolve_device_name(
+    device: BLEDevice,
+    advertisement_data: AdvertisementData | None = None,
+) -> tuple[str | None, int]:
+    """Resolve the best available device name and its source priority."""
+    advertised_name = _normalize_device_name(
+        advertisement_data.local_name if advertisement_data else None
+    )
+    if advertised_name:
+        return advertised_name, 2
+
+    device_name = _normalize_device_name(device.name)
+    if device_name:
+        return device_name, 1
+
+    details = device.details
+    if isinstance(details, dict):
+        for key in ("local_name", "name", "display_name", "alias"):
+            detail_name = _normalize_device_name(details.get(key))
+            if detail_name:
+                return detail_name, 1
+    else:
+        detail_name = _normalize_device_name(getattr(details, "local_name", None))
+        if detail_name:
+            return detail_name, 1
+
+    return None, 0
+
+
+def _with_resolved_device_name(
+    device: BLEDevice,
+    resolved_name: str | None,
+) -> BLEDevice:
+    """Return a BLEDevice with the resolved display name."""
+    if resolved_name == device.name:
+        return device
+
+    return BLEDevice(device.address, resolved_name, device.details)
+
+
 async def scan_devices(
     timeout: float = 5.0,
     name_filter: str | None = None,
-    detection_callback: Callable | None = None
+    detection_callback: Callable[[BLEDevice], None] | None = None,
 ) -> list[BLEDevice]:
     """
     Scan for BLE devices with progressive results.
@@ -527,20 +577,34 @@ async def scan_devices(
     """
     logger.info("ble_scan_start", timeout=timeout, name_filter=name_filter)
 
-    discovered_devices = {}
+    discovered_devices: dict[str, BLEDevice] = {}
+    discovered_name_priority: dict[str, int] = {}
     name_filter_lower = name_filter.lower() if name_filter else None
 
-    def detection_handler(device: BLEDevice, advertisement_data):
+    def detection_handler(device: BLEDevice, advertisement_data: AdvertisementData):
         """Handle device detection during scan."""
+        resolved_name, name_priority = _resolve_device_name(device, advertisement_data)
+        resolved_device = _with_resolved_device_name(device, resolved_name)
+
         # Filter by name if requested
-        if name_filter_lower and (not device.name or name_filter_lower not in device.name.lower()):
+        if name_filter_lower and (
+            not resolved_name or name_filter_lower not in resolved_name.lower()
+        ):
             return
 
-        # Track unique devices by address
-        if device.address not in discovered_devices:
-            discovered_devices[device.address] = device
+        existing_device = discovered_devices.get(device.address)
+        if existing_device is None:
+            discovered_devices[device.address] = resolved_device
+            discovered_name_priority[device.address] = name_priority
             if detection_callback:
-                detection_callback(device)
+                detection_callback(resolved_device)
+            return
+
+        if name_priority > discovered_name_priority.get(device.address, 0):
+            discovered_devices[device.address] = resolved_device
+            discovered_name_priority[device.address] = name_priority
+            if detection_callback:
+                detection_callback(resolved_device)
 
     # Use scanner with detection callback for progressive results
     scanner = BleakScanner(detection_callback=detection_handler)
